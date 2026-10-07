@@ -1,0 +1,27 @@
+# Jeff. Built from the reference photo: dark slicked-back pompadour with a side
+# part, thick chevron mustache, wide brown eyes with raised brows, navy track
+# jacket with red trim over a white collared shirt.
+name: Jeff
+skin: "#f1c9a5"
+ears: true
+hair:
+  style: pompadour
+  color: "#3b2a20"
+facial_hair:
+  style: chevron_mustache
+  color: "#3b2a20"
+eyes:
+  pupil: "#2a1a10"
+  brows: raised        # default brow set: normal | raised
+outfit:
+  top:
+    style: track_jacket
+    color: "#1f2b5e"
+    trim: "#c8102e"
+    collar: "#ffffff"
+  pants: "#55565f"
+  shoes: "#1b1b1b"
+voice:
+  espeak: en-us+m3     # placeholder robot voice until real recordings exist
+  pitch: 40
+  speed: 165

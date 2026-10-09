@@ -1,0 +1,30 @@
+# Eric. Built from the birthday photo: short brown hair, longer and messy on
+# top, freckles, big toothy grin, dark gray sweatshirt with a drippy soccer
+# ball and blue STRIKER lettering.
+name: Eric
+build: kid             # smaller body under a full-size head
+skin: "#f3cdb0"
+ears: true
+freckles: true
+smile: teeth           # happy face shows the big grin
+hair:
+  style: textured_short
+  color: "#4a3324"
+facial_hair:
+  style: none
+eyes:
+  pupil: "#3a2414"
+  brows: normal
+outfit:
+  top:
+    style: sweatshirt
+    color: "#45464b"
+    graphic: soccer_ball
+    print: "#f2f2f2"
+    accent: "#4fc3f7"
+  pants: "#3d4f74"     # guessed, not in the photo
+  shoes: "#e8e8e8"
+voice:
+  espeak: en-us+m1
+  pitch: 85
+  speed: 180

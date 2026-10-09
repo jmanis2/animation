@@ -1,0 +1,28 @@
+# Valentina. Built from her selfie: long dark brown wavy hair swept back off
+# the forehead with reddish highlights, hazel eyes, gray quarter-zip fleece
+# with a blush-pink zipper.
+name: Valentina
+skin: "#ecc3a3"
+ears: false            # hidden by hair
+hair:
+  style: long_wavy
+  color: "#2e1d16"
+  highlight: "#6b3a26"
+facial_hair:
+  style: none
+eyes:
+  pupil: "#6b6a3a"     # hazel
+  brows: normal
+  lashes: true
+outfit:
+  top:
+    style: quarter_zip
+    color: "#5f5c5d"
+    zip: "#d9b8b0"
+    logo: true
+  pants: "#2f3b55"     # guessed, not in the photo
+  shoes: "#3a3030"
+voice:
+  espeak: en-us+f3
+  pitch: 60
+  speed: 165

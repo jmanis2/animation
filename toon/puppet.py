@@ -93,6 +93,24 @@ def _torso(spec):
         out.append(_path("M -26,-152 L 0,-120 L 26,-152 Z", fill=top["collar"]))
         out.append(_path("M -26,-150 L -12,-132 L -4,-146", fill=top["collar"], sw=2.5))
         out.append(_path("M 26,-150 L 12,-132 L 4,-146", fill=top["collar"], sw=2.5))
+    if top.get("style") in ("sweatshirt", "tee"):
+        # Ribbed crew neck, cuff band at the hem.
+        out.append(_path("M -30,-152 Q 0,-126 30,-152", fill=top.get("rib", top["color"]), sw=2.5))
+        out.append(_path("M -24,-150 Q 0,-132 24,-150", stroke="#141414", sw=1.5))
+        if top["style"] == "sweatshirt":
+            out.append(_path("M -57,-52 L 57,-52", stroke="#141414", sw=1.5, cap="butt"))
+        if top.get("graphic") == "soccer_ball":
+            out.append(_soccer_graphic(top))
+    if top.get("style") == "quarter_zip":
+        # Fleece stand collar with a contrasting zipper running to mid chest.
+        z = top.get("zip", "#d9b8b0")
+        out.append(_path("M -32,-156 L -26,-138 L 0,-128 L 26,-138 L 32,-156 Q 0,-146 -32,-156 Z",
+                         fill=top["color"], sw=2.5))
+        out.append(_path("M -26,-140 L 0,-130 L 26,-140", stroke=z, sw=3))
+        out.append(_path("M 0,-130 L 0,-84", stroke=z, sw=4))
+        out.append(_ell(0, -84, 3, 5, z, sw=1.5))
+        if top.get("logo"):
+            out.append(_path("M 18,-122 L 22,-112 L 26,-120 L 30,-112 L 34,-122", stroke=z, sw=2))
     if top.get("style") == "track_jacket":
         out.append(_path("M 0,-120 L 0,-44", sw=2.5))
         if top.get("trim"):
@@ -102,8 +120,32 @@ def _torso(spec):
     return "".join(out)
 
 
+def _soccer_graphic(top):
+    """Drippy soccer ball and sideways STRIKER lettering on the wearer's left chest."""
+    cx, cy, r = 10, -108, 14
+    ink, accent = top.get("print", "#f2f2f2"), top.get("accent", "#4fc3f7")
+    out = [_ell(cx, cy, r, r, ink, stroke="#141414", sw=1.5)]
+    out.append(f'<polygon points="{cx},{cy - 5} {cx + 5},{cy - 1} {cx + 3},{cy + 5} '
+               f'{cx - 3},{cy + 5} {cx - 5},{cy - 1}" fill="#141414"/>')
+    for dx, dy in ((0, -1), (0.95, -0.3), (0.6, 0.8), (-0.6, 0.8), (-0.95, -0.3)):
+        out.append(_path(f"M {cx + dx * 6:.1f},{cy + dy * 6:.1f} L {cx + dx * r:.1f},{cy + dy * r:.1f}",
+                         stroke="#141414", sw=1.2))
+    for dx, ln in ((-8, 12), (-2, 18), (5, 9), (10, 14)):
+        out.append(_path(f"M {cx + dx},{cy + r - 3} L {cx + dx},{cy + r + ln}", stroke=ink, sw=2))
+    out.append(f'<text x="0" y="0" transform="translate({cx + 20},{cy - 20}) rotate(90)" '
+               f'font-family="DejaVu Sans" font-weight="bold" font-size="12" fill="{accent}">STRIKER</text>')
+    return "".join(out)
+
+
 def _hair_back(spec):
     h = spec["hair"]
+    if h["style"] == "long_wavy":
+        return _path("M -86,-240 C -106,-196 -86,-166 -102,-128 C -96,-104 -84,-108 -76,-94 "
+                     "C -60,-100 -50,-96 -40,-104 L 40,-104 C 50,-96 60,-100 76,-94 "
+                     "C 84,-108 96,-104 102,-128 C 86,-166 106,-196 86,-240 Z", fill=h["color"])
+    if h["style"] == "long_straight":
+        return _path("M -84,-240 C -92,-200 -92,-150 -90,-100 L -60,-96 L -30,-100 L 30,-100 "
+                     "L 60,-96 L 90,-100 C 92,-150 92,-200 84,-240 Z", fill=h["color"])
     if h["style"] == "long":
         return _path("M -84,-236 C -96,-170 -92,-130 -70,-112 L 70,-112 "
                      "C 92,-130 96,-170 84,-236 Z", fill=h["color"])
@@ -124,6 +166,42 @@ def _hair_front(spec):
             # Sideburns
             _path("M -80,-232 L -76,-206 L -70,-226 Z", fill=c, sw=2),
             _path("M 80,-232 L 76,-206 L 70,-226 Z", fill=c, sw=2),
+        ])
+    if style == "long_wavy":
+        # Swept back off the forehead, slightly off-center part, waves framing the face.
+        hi = h.get("highlight", "#6b3a26")
+        return "".join([
+            _path("M -84,-226 C -92,-300 -48,-324 -6,-320 C 48,-324 92,-300 84,-226 "
+                  "C 80,-252 66,-278 40,-292 C 20,-300 6,-302 -6,-298 C -22,-302 -48,-294 -66,-274 "
+                  "C -76,-262 -82,-246 -84,-226 Z", fill=c),
+            _path("M -84,-234 C -98,-204 -86,-180 -96,-150 C -90,-138 -82,-140 -76,-132 "
+                  "C -80,-160 -72,-190 -74,-232 Z", fill=c, sw=2.5),
+            _path("M 84,-234 C 98,-204 86,-180 96,-150 C 90,-138 82,-140 76,-132 "
+                  "C 80,-160 72,-190 74,-232 Z", fill=c, sw=2.5),
+            _path("M -6,-298 C -2,-308 2,-314 6,-320", stroke=hi, sw=2),
+            _path("M -56,-290 C -70,-270 -80,-240 -88,-200", stroke=hi, sw=2.5),
+        ])
+    if style == "long_straight":
+        # Side part on one side, the rest sweeping across the forehead.
+        hi = h.get("highlight", "#e2b57a")
+        return "".join([
+            _path("M -82,-226 C -88,-296 -50,-322 -26,-320 C 30,-324 88,-298 82,-226 "
+                  "C 76,-250 58,-264 34,-270 C 6,-280 -14,-292 -26,-302 C -46,-292 -68,-266 -82,-226 Z",
+                  fill=c),
+            _path("M -82,-230 L -90,-140 L -76,-144 L -72,-228 Z", fill=c, sw=2.5),
+            _path("M 82,-230 L 90,-140 L 76,-144 L 72,-228 Z", fill=c, sw=2.5),
+            _path("M -26,-302 L -24,-318", stroke=hi, sw=2),
+            _path("M -10,-298 C 20,-288 50,-276 70,-256", stroke=hi, sw=2),
+        ])
+    if style == "textured_short":
+        # Short on the sides, longer messy top pushed up at the front.
+        return "".join([
+            _path("M -81,-226 C -88,-282 -60,-316 -10,-322 L -2,-334 L 10,-322 L 24,-332 "
+                  "L 32,-318 C 66,-314 90,-282 81,-226 L 74,-244 C 66,-270 46,-282 24,-282 "
+                  "L 14,-290 L 4,-280 C -14,-286 -40,-282 -54,-268 C -64,-262 -72,-252 -74,-244 Z",
+                  fill=c),
+            _path("M -40,-292 C -30,-306 -14,-312 2,-312", stroke="#6a4c36", sw=2),
+            _path("M 30,-298 C 44,-302 58,-296 66,-286", stroke="#6a4c36", sw=2),
         ])
     if style == "short":
         return _path("M -80,-234 C -86,-290 -46,-314 0,-312 C 46,-314 86,-290 80,-234 "
@@ -160,11 +238,18 @@ def _eyes(spec, expression, look, blink):
     elif expression == "happy":
         ry = 21
     lx, ly = look
+    if expression == "silly":
+        lx, ly = -7, 0
     out = []
     for x in (-21, 21):
         out.append(_ell(x, EYE_Y, rx, ry, "#ffffff"))
         out.append(f'<circle cx="{x + lx:.1f}" cy="{EYE_Y + ly:.1f}" r="{pr}" '
                    f'fill="{spec["eyes"].get("pupil", "#000")}"/>')
+    if spec["eyes"].get("lashes") and not blink:
+        for x, s in ((-21, -1), (21, 1)):
+            for k in (0, 1):
+                bx, by = x + s * (14 + k * 6), EYE_Y - ry + 6 + k * 8
+                out.append(_path(f"M {bx},{by} L {bx + s * 7},{by - 6}", sw=2.5))
     if expression == "angry":
         for x in (-21, 21):
             # Lid cut across the top of each eye, lower on the inner side.
@@ -176,9 +261,18 @@ def _eyes(spec, expression, look, blink):
     return "".join(out)
 
 
-def _mouth(expression, mouth):
+def _mouth(expression, mouth, smile=None):
     y = MOUTH_Y
     if mouth in (None, "closed"):
+        if expression == "silly":
+            return _ell(8, y, 9, 8, "#c4707f") + _path(f"M 2,{y} L 14,{y}", stroke="#7a3040", sw=2)
+        if expression == "happy" and smile == "teeth":
+            return "".join([
+                _path(f"M -28,{y - 8} Q 0,{y + 24} 28,{y - 8} Q 0,{y - 2} -28,{y - 8} Z",
+                      fill=MOUTH_DARK),
+                _path(f"M -24,{y - 6} Q 0,{y + 2} 24,{y - 6} L 22,{y + 1} Q 0,{y + 8} -22,{y + 1} Z",
+                      fill="#ffffff", sw=1.5),
+            ])
         if expression == "happy":
             return _path(f"M -22,{y - 6} Q 0,{y + 14} 22,{y - 6}", sw=3.5)
         if expression in ("sad", "angry"):
@@ -215,7 +309,12 @@ def _head(spec, expression, mouth, look, blink):
     out.append(_ell(0, HEAD_CY, HEAD_R, HEAD_R + 2, spec["skin"]))
     out.append(_eyes(spec, expression, look, blink))
     out.append(_brows(spec, expression))
-    out.append(_mouth(expression, mouth))
+    if spec.get("freckles"):
+        fc = spec.get("freckle_color", "#c98a62")
+        for x, y in ((-50, -210), (-42, -204), (-56, -202), (-46, -214), (-36, -210),
+                     (50, -210), (42, -204), (56, -202), (46, -214), (36, -210)):
+            out.append(f'<circle cx="{x}" cy="{y}" r="1.8" fill="{fc}"/>')
+    out.append(_mouth(expression, mouth, spec.get("smile")))
     out.append(_facial_hair(spec))
     out.append(_hair_front(spec))
     return "".join(out)
@@ -226,13 +325,15 @@ def draw(spec, x, y, expression="neutral", mouth="closed", arms="down",
     """SVG group for one character standing with feet at (x, y)."""
     jx, jy, jr = jitter
     head = _head(spec, expression, mouth, look, blink)
+    # Kids get a shrunken body under a full-size head, like South Park kids.
+    body_scale = 0.8 if spec.get("build") == "kid" else 1.0
+    neck_drop = -NECK[1] * (1 - body_scale)
+    scale *= spec.get("size", 1.0)
+    body = (_legs(spec) + _torso(spec) + _arm(spec, -1, arms, t) + _arm(spec, 1, arms, t))
     return (
         f'<g transform="translate({x + jx:.1f},{y + jy:.1f}) rotate({jr:.2f}) scale({scale})">'
-        + _hair_back(spec)
-        + _legs(spec)
-        + _torso(spec)
-        + _arm(spec, -1, arms, t)
-        + _arm(spec, 1, arms, t)
-        + f'<g transform="rotate({head_tilt:.2f} {NECK[0]} {NECK[1]})">{head}</g>'
+        f'<g transform="translate(0,{neck_drop:.1f})">{_hair_back(spec)}</g>'
+        f'<g transform="scale({body_scale})">{body}</g>'
+        f'<g transform="translate(0,{neck_drop:.1f}) rotate({head_tilt:.2f} {NECK[0]} {NECK[1]})">{head}</g>'
         + "</g>"
     )

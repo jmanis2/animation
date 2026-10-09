@@ -18,10 +18,10 @@ from dataclasses import dataclass, field
 
 import yaml
 
-EXPRESSIONS = {"neutral", "happy", "surprised", "angry", "sad"}
+EXPRESSIONS = {"neutral", "happy", "surprised", "angry", "sad", "silly"}
 ARMS = {"down", "wave", "up", "point", "shrug"}
-POSITIONS = {"far left": 200, "left": 330, "center": 640, "middle": 640,
-             "right": 950, "far right": 1080}
+POSITIONS = {"far left": 150, "left": 380, "center": 640, "middle": 640,
+             "right": 900, "far right": 1130}
 
 
 @dataclass

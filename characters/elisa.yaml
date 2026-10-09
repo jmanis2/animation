@@ -1,0 +1,29 @@
+# Elisa. Built from the kitchen photo: long straight strawberry-blonde hair
+# with a side part, lots of freckles, blue-gray eyes. Her signature move is
+# the sideways-glance pucker face: use the `silly` expression.
+name: Elisa
+build: kid
+skin: "#f5d3bd"
+ears: false
+freckles: true
+freckle_color: "#c47a52"
+hair:
+  style: long_straight
+  color: "#c48d55"
+  highlight: "#e2b57a"
+facial_hair:
+  style: none
+eyes:
+  pupil: "#55687a"
+  brows: normal
+  lashes: true
+outfit:
+  top:                 # outfit guessed, not in the photo
+    style: tee
+    color: "#7fb7a4"
+  pants: "#5b74a8"
+  shoes: "#f0b7c4"
+voice:
+  espeak: en-us+f4
+  pitch: 90
+  speed: 185

@@ -48,7 +48,7 @@ JEFF: Recorded line. [audio: voices/jeff/line1.m4a]
 
   Positions are `far left`, `left`, `center`, `right`, and `far right`.
 - Dialogue: `NAME (modifiers): text`. The modifiers are optional:
-  - expressions: `neutral`, `happy`, `surprised`, `angry`, `sad`
+  - expressions: `neutral`, `happy`, `surprised`, `angry`, `sad`, `silly`
   - arms: `down`, `wave`, `up`, `point`, `shrug`
 - Voices: espeak-ng is a robot placeholder. Add `[audio: path]` to a line
   to use a real recording in any format ffmpeg reads. The mouth moves with
@@ -56,6 +56,15 @@ JEFF: Recorded line. [audio: voices/jeff/line1.m4a]
 
 ## Adding a character
 
-Copy `characters/jeff.yaml` and change the fields. Hair styles are
-`pompadour`, `short`, `long`, and `bald`. Facial hair is `chevron_mustache` or
-`none`. New hair or clothing styles go in `toon/puppet.py`.
+The cast is `jeff`, `valentina`, `eric`, and `elisa`. To add a character,
+copy one of their YAML files and change the fields:
+
+- `build: kid` gives a smaller body under a full-size head.
+- Hair styles: `pompadour`, `textured_short`, `long_wavy`,
+  `long_straight`, `short`, `long`, `bald`
+- Tops: `track_jacket`, `quarter_zip`, `sweatshirt` (optional
+  `graphic: soccer_ball`), `tee`
+- Extras: `freckles`, `ears`, `eyes.lashes`, `smile: teeth`, and
+  `facial_hair: chevron_mustache`
+
+New hair or clothing styles go in `toon/puppet.py`.

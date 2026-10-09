@@ -25,6 +25,9 @@ outfit:
   pants: "#3d4f74"     # guessed, not in the photo
   shoes: "#e8e8e8"
 voice:
+  # Cloned from this sample when it exists (see README), else espeak below.
+  reference: voices/eric/reference.wav
+  exaggeration: 0.5    # 0.25 flat ... 1.0 very animated
   espeak: en-us+m1
   pitch: 85
   speed: 180

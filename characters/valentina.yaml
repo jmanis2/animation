@@ -23,6 +23,9 @@ outfit:
   pants: "#2f3b55"     # guessed, not in the photo
   shoes: "#3a3030"
 voice:
+  # Cloned from this sample when it exists (see README), else espeak below.
+  reference: voices/valentina/reference.wav
+  exaggeration: 0.5    # 0.25 flat ... 1.0 very animated
   espeak: en-us+f3
   pitch: 60
   speed: 165

@@ -50,9 +50,41 @@ JEFF: Recorded line. [audio: voices/jeff/line1.m4a]
 - Dialogue: `NAME (modifiers): text`. The modifiers are optional:
   - expressions: `neutral`, `happy`, `surprised`, `angry`, `sad`, `silly`
   - arms: `down`, `wave`, `up`, `point`, `shrug`
-- Voices: espeak-ng is a robot placeholder. Add `[audio: path]` to a line
-  to use a real recording in any format ffmpeg reads. The mouth moves with
-  the loudness of the audio either way.
+- Voices: see below. Add `[audio: path]` to a line to use a real recording
+  in any format ffmpeg reads. The mouth moves with the loudness of the audio
+  either way.
+
+## Voices
+
+Each line is spoken by the first of these that's available:
+
+1. A recording, if the line has `[audio: path]`.
+2. A clone of the character's voice, made with
+   [Chatterbox](https://github.com/resemble-ai/chatterbox) from
+   `voices/<name>/reference.wav`.
+3. The espeak-ng robot placeholder.
+
+To clone a voice:
+
+```sh
+pip install chatterbox-tts   # pulls in torch, a few GB
+mkdir -p voices/jeff
+ffmpeg -i memo.m4a -ac 1 -ar 24000 voices/jeff/reference.wav
+python3 -m toon.render episodes/pilot.md
+```
+
+- The first run downloads the model weights from huggingface.co. If a
+  machine can't reach it, copy the weights folder over and set
+  `CHATTERBOX_CKPT=/path/to/weights`.
+- Generated lines are cached in `out/voice_cache/`, so a re-render only
+  speaks lines that changed.
+- It runs on CPU at a few seconds per line, and uses a CUDA GPU if one is
+  present.
+- `exaggeration` in the character YAML sets how animated the delivery is.
+
+Reference sample: 20 to 60 seconds of natural, conversational speech in a
+quiet room with the phone about 20 cm away, and nobody else talking.
+`voices/` is git-ignored so voice samples never get committed.
 
 ## Adding a character
 

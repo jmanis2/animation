@@ -24,6 +24,9 @@ outfit:
   pants: "#5b74a8"
   shoes: "#f0b7c4"
 voice:
+  # Cloned from this sample when it exists (see README), else espeak below.
+  reference: voices/elisa/reference.wav
+  exaggeration: 0.5    # 0.25 flat ... 1.0 very animated
   espeak: en-us+f4
   pitch: 90
   speed: 185

@@ -1,26 +1,30 @@
-# Jeff. Built from the reference photo: dark slicked-back pompadour with a side
-# part, thick chevron mustache, wide brown eyes with raised brows, navy track
-# jacket with red trim over a white collared shirt.
+# Jeff. Built from his selfie: brown hair, short faded sides and a longer
+# top swept up and over, rectangular gunmetal glasses, short auburn beard
+# going gray at the chin, blue-green eyes, freckles, charcoal polo.
 name: Jeff
-skin: "#f1c9a5"
+skin: "#f0c4a2"
 ears: true
+freckles: true
+freckle_color: "#c98058"
+glasses:
+  color: "#55585e"
 hair:
-  style: pompadour
-  color: "#3b2a20"
+  style: quiff
+  color: "#5e4838"
+  highlight: "#8a7462"
 facial_hair:
-  style: chevron_mustache
-  color: "#3b2a20"
+  style: full_beard
+  color: "#a85a32"
+  gray: "#c9bfb4"
 eyes:
-  pupil: "#2a1a10"
-  brows: raised        # default brow set: normal | raised
+  pupil: "#3f7f80"     # blue-green
+  brows: normal
 outfit:
   top:
-    style: track_jacket
-    color: "#1f2b5e"
-    trim: "#c8102e"
-    collar: "#ffffff"
-  pants: "#55565f"
-  shoes: "#1b1b1b"
+    style: polo
+    color: "#36383d"
+  pants: "#4a5a78"     # guessed, not in the photo
+  shoes: "#2a2622"
 voice:
   # Cloned from this sample when it exists (see README), else espeak below.
   reference: voices/jeff/reference.wav

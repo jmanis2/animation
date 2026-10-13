@@ -101,6 +101,14 @@ def _torso(spec):
             out.append(_path("M -57,-52 L 57,-52", stroke="#141414", sw=1.5, cap="butt"))
         if top.get("graphic") == "soccer_ball":
             out.append(_soccer_graphic(top))
+    if top.get("style") == "polo":
+        # Collar flaps in the shirt color, short button placket.
+        c = top["color"]
+        out.append(_path("M -28,-154 L -10,-126 L 0,-140 Z", fill=c, sw=2.5))
+        out.append(_path("M 28,-154 L 10,-126 L 0,-140 Z", fill=c, sw=2.5))
+        out.append(_path("M -6,-138 L -6,-96 L 6,-96 L 6,-138", sw=2))
+        out.append(_ell(0, -122, 3, 3, "#f2f2f2", sw=1))
+        out.append(_ell(0, -106, 3, 3, "#f2f2f2", sw=1))
     if top.get("style") == "quarter_zip":
         # Fleece stand collar with a contrasting zipper running to mid chest.
         z = top.get("zip", "#d9b8b0")
@@ -192,6 +200,20 @@ def _hair_front(spec):
             _path("M 82,-230 L 90,-140 L 76,-144 L 72,-228 Z", fill=c, sw=2.5),
             _path("M -26,-302 L -24,-318", stroke=hi, sw=2),
             _path("M -10,-298 C 20,-288 50,-276 70,-256", stroke=hi, sw=2),
+        ])
+    if style == "quiff":
+        # Faded short sides, longer top swept up and over to one side.
+        hi = h.get("highlight", "#8a7462")
+        return "".join([
+            _path("M -81,-226 C -86,-262 -76,-282 -60,-290 C -50,-314 -10,-332 30,-326 "
+                  "C 66,-320 88,-298 81,-226 L 76,-246 C 72,-270 56,-286 28,-290 "
+                  "C 0,-296 -34,-292 -56,-280 C -68,-272 -74,-256 -77,-242 Z", fill=c),
+            _path("M -54,-294 C -34,-316 0,-326 34,-320", stroke=hi, sw=2.5),
+            _path("M -30,-294 C -10,-310 20,-316 54,-308", stroke=hi, sw=2),
+            _path("M 10,-292 C 34,-306 58,-304 74,-288", stroke=hi, sw=2),
+            # Shorter faded hair over the ears
+            _path("M -81,-240 L -78,-212 L -72,-236 Z", fill=c, sw=2),
+            _path("M 81,-240 L 78,-212 L 72,-236 Z", fill=c, sw=2),
         ])
     if style == "textured_short":
         # Short on the sides, longer messy top pushed up at the front.
@@ -298,7 +320,36 @@ def _facial_hair(spec):
         c = f["color"]
         return _path("M -46,-184 C -44,-206 -22,-214 0,-206 C 22,-214 44,-206 46,-184 "
                      "C 34,-192 16,-194 0,-190 C -16,-194 -34,-192 -46,-184 Z", fill=c, sw=2.5)
+    if f["style"] == "full_beard":
+        # Short beard over the jaw joined to the mustache, with an opening for
+        # the mouth (even-odd hole) and an optional gray patch on the chin.
+        c, y = f["color"], MOUTH_Y
+        beard = (f"M -78,-204 C -77,-164 -50,-136 0,-132 C 50,-136 77,-164 78,-204 "
+                 f"C 70,-192 60,-188 46,-190 C 30,-196 12,-198 0,-194 C -12,-198 -30,-196 -46,-190 "
+                 f"C -60,-188 -70,-192 -78,-204 Z "
+                 f"M -20,{y + 2} A 20,12 0 1 0 20,{y + 2} A 20,12 0 1 0 -20,{y + 2} Z")
+        out = [f'<path d="{beard}" fill="{c}" fill-rule="evenodd" stroke="{OUTLINE}" '
+               f'stroke-width="{SW}" stroke-linejoin="round"/>']
+        if f.get("gray"):
+            out.append(_path("M -20,-140 Q 0,-131 20,-140 Q 0,-152 -20,-140 Z",
+                             fill=f["gray"], stroke="none"))
+        return "".join(out)
     return ""
+
+
+def _glasses(spec):
+    g = spec.get("glasses")
+    if not g:
+        return ""
+    c, y0, y1 = g.get("color", "#55585e"), EYE_Y - 26, EYE_Y + 24
+    out = []
+    for x0 in (-50, 2):
+        out.append(f'<rect x="{x0}" y="{y0}" width="48" height="{y1 - y0}" rx="7" '
+                   f'fill="#dff3f5" fill-opacity="0.18" stroke="{c}" stroke-width="5"/>')
+    out.append(_path(f"M -2,{y0 + 14} L 2,{y0 + 14}", stroke=c, sw=5, cap="butt"))
+    out.append(_path(f"M -50,{y0 + 10} L -78,{y0 + 16}", stroke=c, sw=4))
+    out.append(_path(f"M 50,{y0 + 10} L 78,{y0 + 16}", stroke=c, sw=4))
+    return "".join(out)
 
 
 def _head(spec, expression, mouth, look, blink):
@@ -314,8 +365,13 @@ def _head(spec, expression, mouth, look, blink):
         for x, y in ((-50, -210), (-42, -204), (-56, -202), (-46, -214), (-36, -210),
                      (50, -210), (42, -204), (56, -202), (46, -214), (36, -210)):
             out.append(f'<circle cx="{x}" cy="{y}" r="1.8" fill="{fc}"/>')
-    out.append(_mouth(expression, mouth, spec.get("smile")))
-    out.append(_facial_hair(spec))
+    if spec["facial_hair"]["style"] == "full_beard":
+        out.append(_facial_hair(spec))
+        out.append(_mouth(expression, mouth, spec.get("smile")))
+    else:
+        out.append(_mouth(expression, mouth, spec.get("smile")))
+        out.append(_facial_hair(spec))
+    out.append(_glasses(spec))
     out.append(_hair_front(spec))
     return "".join(out)
 

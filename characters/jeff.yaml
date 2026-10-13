@@ -1,6 +1,6 @@
 # Jeff. Built from his selfie: brown hair, short faded sides and a longer
-# top swept up and over, rectangular gunmetal glasses, short auburn beard
-# going gray at the chin, blue-green eyes, freckles, charcoal polo.
+# top swept up and over, rectangular gunmetal glasses, short beard along the
+# jawline going gray at the chin, blue-green eyes, freckles, charcoal polo.
 name: Jeff
 skin: "#f0c4a2"
 ears: true
@@ -13,9 +13,10 @@ hair:
   color: "#5e4838"
   highlight: "#8a7462"
 facial_hair:
-  style: full_beard
-  color: "#a85a32"
-  gray: "#c9bfb4"
+  style: jaw_beard     # full_beard for the big version
+  color: "#8c4c2a"
+  gray: "#b9aea2"
+  opacity: 0.9
 eyes:
   pupil: "#3f7f80"     # blue-green
   brows: normal

@@ -320,6 +320,19 @@ def _facial_hair(spec):
         c = f["color"]
         return _path("M -46,-184 C -44,-206 -22,-214 0,-206 C 22,-214 44,-206 46,-184 "
                      "C 34,-192 16,-194 0,-190 C -16,-194 -34,-192 -46,-184 Z", fill=c, sw=2.5)
+    if f["style"] == "jaw_beard":
+        # Short beard: a band along the jawline below the cheeks, thin mustache,
+        # drawn soft (no outline) so it reads as close-trimmed growth.
+        c, op = f["color"], f.get("opacity", 0.8)
+        out = [f'<path d="M -76,-204 A 80,82 0 0 0 76,-204 L 64,-198 '
+               f'C 58,-178 38,-166 0,-165 C -38,-166 -58,-178 -64,-198 Z" '
+               f'fill="{c}" fill-opacity="{op}"/>',
+               f'<path d="M -26,-184 C -14,-199 14,-199 26,-184 C 12,-191 -12,-191 -26,-184 Z" '
+               f'fill="{c}" fill-opacity="{op}"/>']
+        if f.get("gray"):
+            out.append(f'<path d="M -16,-152 Q 0,-146 16,-152 Q 0,-160 -16,-152 Z" '
+                       f'fill="{f["gray"]}" fill-opacity="{op}"/>')
+        return "".join(out)
     if f["style"] == "full_beard":
         # Short beard over the jaw joined to the mustache, with an opening for
         # the mouth (even-odd hole) and an optional gray patch on the chin.
@@ -365,7 +378,7 @@ def _head(spec, expression, mouth, look, blink):
         for x, y in ((-50, -210), (-42, -204), (-56, -202), (-46, -214), (-36, -210),
                      (50, -210), (42, -204), (56, -202), (46, -214), (36, -210)):
             out.append(f'<circle cx="{x}" cy="{y}" r="1.8" fill="{fc}"/>')
-    if spec["facial_hair"]["style"] == "full_beard":
+    if spec["facial_hair"]["style"] in ("full_beard", "jaw_beard"):
         out.append(_facial_hair(spec))
         out.append(_mouth(expression, mouth, spec.get("smile")))
     else:

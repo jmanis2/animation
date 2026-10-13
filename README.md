@@ -67,7 +67,9 @@ Each line is spoken by the first of these that's available:
 To clone a voice:
 
 ```sh
-pip install chatterbox-tts   # pulls in torch, a few GB
+# Without an NVIDIA GPU, install the CPU-only torch first (~180 MB instead of several GB):
+pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+pip install chatterbox-tts
 mkdir -p voices/jeff
 ffmpeg -i memo.m4a -ac 1 -ar 24000 voices/jeff/reference.wav
 python3 -m toon.render episodes/pilot.md

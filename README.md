@@ -83,6 +83,11 @@ python3 -m toon.render episodes/pilot.md
 - It runs on CPU at a few seconds per line, and uses a CUDA GPU if one is
   present.
 - `exaggeration` in the character YAML sets how animated the delivery is.
+- `pitch_shift` (semitones) moves a cloned voice up or down while keeping
+  its timbre. Use it to separate similar voices, for example siblings.
+- To choose a reference clip, take the 10 to 15 seconds of the memo that
+  sounds most like that person. The two kids sound alike, so their clips
+  were picked to be as different from each other as possible.
 
 Reference sample: 20 to 60 seconds of natural, conversational speech in a
 quiet room with the phone about 20 cm away, and nobody else talking.

@@ -72,7 +72,7 @@ def _clone(text, voice, ref, out_path):
             w.setframerate(_clone_model.sr)
             w.writeframes(pcm.tobytes())
         tmp.rename(cached)
-    return load_recording(cached, out_path)
+    return load_recording(cached, out_path, float(voice.get("pitch_shift", 0)))
 
 
 def _espeak(text, voice, out_path):
@@ -83,9 +83,14 @@ def _espeak(text, voice, out_path):
     return load_recording(tmp, out_path)
 
 
-def load_recording(src, out_path):
-    """Normalize any audio file to mono RATE wav and return its samples."""
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(src),
+def load_recording(src, out_path, pitch_shift=0.0):
+    """Normalize any audio file to mono RATE wav and return its samples.
+
+    pitch_shift moves the pitch by that many semitones while keeping the
+    voice's timbre (rubberband with preserved formants)."""
+    af = ["-af", f"rubberband=pitch={2 ** (pitch_shift / 12):.5f}:formant=preserved"] \
+        if pitch_shift else []
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(src), *af,
                     "-ac", "1", "-ar", str(RATE), "-sample_fmt", "s16", str(out_path)],
                    check=True)
     return _read_wav(out_path)

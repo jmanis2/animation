@@ -28,6 +28,7 @@ voice:
   # Cloned from this sample when it exists (see README), else espeak below.
   reference: voices/eric/reference.wav
   exaggeration: 0.5    # 0.25 flat ... 1.0 very animated
+  pitch_shift: -1       # semitones applied to the clone, keeps his voice apart from Elisa's
   espeak: en-us+m1
   pitch: 85
   speed: 180

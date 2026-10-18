@@ -48,6 +48,30 @@ def living_room(frame):
     return "".join(out)
 
 
+SEAT_Y = 632  # where a sitting character's lap rests on the sofa
+
+
+def sofa(frame):
+    """Living room with a big, low sofa in the middle, for sitting scenes."""
+    out = [_rect(0, 0, W, 560, "#e9d8a6", stroke="none")]
+    for x in range(40, W, 80):
+        out.append(f'<rect x="{x}" y="0" width="22" height="560" fill="#e1cd94"/>')
+    out.append(_rect(-10, 560, W + 20, 200, "#8a5a3c"))
+    out.append(_rect(60, 120, 200, 170, "#9fd3f5"))
+    out.append(f'<path d="M 160,120 L 160,290 M 60,205 L 260,205" stroke="#141414" stroke-width="6"/>')
+    out.append(_rect(1060, 150, 150, 110, "#c2603a"))           # picture on the wall
+    out.append(_rect(1075, 165, 120, 80, "#e8a33a", stroke="none"))
+    body, dark, cushion = "#5f7f8c", "#4b6672", "#6f909d"
+    out.append(f'<rect x="300" y="410" width="690" height="200" rx="34" fill="{body}" stroke="#141414" stroke-width="3"/>')
+    for i in range(3):
+        out.append(f'<rect x="{330 + i * 212}" y="430" width="200" height="150" rx="22" fill="{cushion}" stroke="#141414" stroke-width="3"/>')
+    out.append(f'<rect x="320" y="582" width="650" height="44" rx="12" fill="{cushion}" stroke="#141414" stroke-width="3"/>')
+    out.append(_rect(320, 624, 650, 24, dark))
+    for x0 in (262, 968):
+        out.append(f'<rect x="{x0}" y="490" width="62" height="158" rx="24" fill="{body}" stroke="#141414" stroke-width="3"/>')
+    return "".join(out)
+
+
 def server_room(frame):
     out = [_rect(0, 0, W, 560, "#5d6470", stroke="none")]
     out.append(_rect(-10, 560, W + 20, 200, "#3b3f46"))
@@ -82,4 +106,5 @@ BACKGROUNDS = {
     "living room": living_room,
     "server_room": server_room,
     "server room": server_room,
+    "sofa": sofa,
 }

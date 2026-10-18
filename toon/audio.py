@@ -28,6 +28,8 @@ def synth(text, voice, out_path):
     Uses a Chatterbox clone of `voice.reference` when that file exists and
     chatterbox-tts is installed, otherwise the espeak-ng placeholder."""
     ref = voice.get("reference")
+    if os.environ.get("TOON_PREVIEW"):
+        return _espeak(text, voice, out_path)     # fast draft render, skip cloning
     if ref and (ROOT / ref).exists():
         try:
             return _clone(text, voice, ROOT / ref, out_path)

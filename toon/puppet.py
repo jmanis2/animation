@@ -42,6 +42,9 @@ ARM_POSES = {
     "wave":  ((84, -150), (112, -200)),
     "point": ((82, -136), (122, -140)),
     "shrug": ((76, -112), (100, -146)),
+    "ipad":  ((60, -98), (36, -118)),     # both hands holding a tablet at the chest
+    "mug":   ((62, -98), (40, -124)),     # right hand holding a mug
+    "star":  ((82, -168), (112, -212)),   # arms flung up and out, gymnastics
 }
 
 
@@ -49,8 +52,10 @@ def _arm_points(side, arms, t):
     """Which pose each arm takes for a given `arms` keyword."""
     if arms == "up":
         pose = "wave"
-    elif arms == "shrug":
-        pose = "shrug"
+    elif arms in ("shrug", "ipad", "star"):
+        pose = arms
+    elif arms == "mug" and side == 1:
+        pose = "mug"
     elif arms in ("wave", "point") and side == 1:
         pose = arms
     else:
@@ -59,6 +64,9 @@ def _arm_points(side, arms, t):
     if pose == "wave":
         # Waving hand swings on twos, like a moved cutout.
         hx += 12 if (int(t * 6) % 2) else -6
+    elif pose == "ipad":
+        # Frantic thumb tapping: the hands take turns jabbing at the screen.
+        hy += -5 if (int(t * 12) + (side > 0)) % 2 else 1
     return (side * 46, -140), (side * ex, ey), (side * hx, hy)
 
 
@@ -76,8 +84,28 @@ def _arm(spec, side, arms, t):
     return "".join(out)
 
 
-def _legs(spec):
+def _legs(spec, legs="stand", sit_drop=0.0):
     o = spec["outfit"]
+    if legs == "spread":
+        return "".join([
+            _path("M -44,-46 L 44,-46 L 74,-14 L 50,-6 L 0,-32 L -50,-6 L -74,-14 Z", fill=o["pants"]),
+            _ell(-66, -6, 22, 9, o["shoes"]),
+            _ell(66, -6, 22, 9, o["shoes"]),
+        ])
+    if legs == "sit":
+        # Seen from the front: the lap rests on the seat at the origin and the
+        # shins hang down over the seat edge to the floor sit_drop below.
+        d = sit_drop
+        return "".join([
+            _path(f"M -40,-22 L -6,-22 L -6,{d - 10:.1f} L -40,{d - 10:.1f} Z", fill=o["pants"]),
+            _path(f"M 6,-22 L 40,-22 L 40,{d - 10:.1f} L 6,{d - 10:.1f} Z", fill=o["pants"]),
+            _path("M -46,-50 L 46,-50 L 46,-24 L -46,-24 Z", fill=o["pants"]),
+            # Knees pointing at the camera.
+            _ell(-23, -20, 24, 13, o["pants"]),
+            _ell(23, -20, 24, 13, o["pants"]),
+            _ell(-24, d - 7, 26, 9, o["shoes"]),
+            _ell(24, d - 7, 26, 9, o["shoes"]),
+        ])
     return "".join([
         _path("M -44,-46 L 44,-46 L 44,-10 L -44,-10 Z", fill=o["pants"]),
         _path("M 0,-34 L 0,-10", sw=2.5),
@@ -143,6 +171,29 @@ def _soccer_graphic(top):
     out.append(f'<text x="0" y="0" transform="translate({cx + 20},{cy - 20}) rotate(90)" '
                f'font-family="DejaVu Sans" font-weight="bold" font-size="12" fill="{accent}">STRIKER</text>')
     return "".join(out)
+
+
+def _prop(prop, t):
+    if prop == "ipad":
+        # Seen from behind: silver back, camera dot, and screen light spilling
+        # up over the top edge in flashing game colors.
+        glow = ("#5ec8ff", "#ff5ec4", "#ffe75e", "#6bff8a")[int(t * 6) % 4]
+        return "".join([
+            f'<ellipse cx="0" cy="-150" rx="52" ry="18" fill="{glow}" fill-opacity="0.45"/>',
+            '<rect x="-40" y="-146" width="80" height="54" rx="7" fill="#c9ccd2" '
+            f'stroke="{OUTLINE}" stroke-width="{SW}"/>',
+            '<circle cx="-30" cy="-136" r="3" fill="#2a2a2e"/>',
+        ])
+    if prop == "mug":
+        sway = 3 if int(t * 3) % 2 else -3
+        return "".join([
+            _path("M 58,-132 Q 70,-126 58,-116", sw=4),
+            f'<rect x="22" y="-144" width="36" height="36" rx="5" fill="#e8e2d4" stroke="{OUTLINE}" stroke-width="{SW}"/>',
+            '<rect x="22" y="-132" width="36" height="8" fill="#c8102e"/>',
+            _path(f"M 36,-146 Q {36 + sway},-156 36,-166 Q {36 - sway},-176 36,-184", stroke="#b8b8b8", sw=2.5),
+            _path(f"M 48,-146 Q {48 - sway},-156 48,-166", stroke="#b8b8b8", sw=2.5),
+        ])
+    return ""
 
 
 def _hair_back(spec):
@@ -239,8 +290,12 @@ def _brows(spec, expression):
     lift = -8 if spec["eyes"].get("brows") == "raised" else 0
     if expression == "surprised":
         lift -= 6
+    elif expression == "manic":
+        lift -= 12
+    elif expression == "bored":
+        lift += 4
     y = EYE_Y - 32 + lift
-    if expression == "angry":
+    if expression in ("angry", "yelling"):
         left, right = f"M -44,{y - 6} L -8,{y + 10}", f"M 44,{y - 6} L 8,{y + 10}"
     elif expression == "sad":
         left, right = f"M -44,{y + 8} L -8,{y - 6}", f"M 44,{y + 8} L 8,{y - 6}"
@@ -257,11 +312,17 @@ def _eyes(spec, expression, look, blink):
     rx, ry, pr = 22, 26, 3.8
     if expression == "surprised":
         rx, ry, pr = 23, 30, 3.2
+    elif expression == "manic":
+        rx, ry, pr = 24, 31, 2.6
     elif expression == "happy":
         ry = 21
     lx, ly = look
     if expression == "silly":
         lx, ly = -7, 0
+    elif expression == "manic":
+        lx, ly = 0, 12            # glued to the screen
+    elif expression == "bored":
+        lx, ly = 0, 7
     out = []
     for x in (-21, 21):
         out.append(_ell(x, EYE_Y, rx, ry, "#ffffff"))
@@ -272,7 +333,17 @@ def _eyes(spec, expression, look, blink):
             for k in (0, 1):
                 bx, by = x + s * (14 + k * 6), EYE_Y - ry + 6 + k * 8
                 out.append(_path(f"M {bx},{by} L {bx + s * 7},{by - 6}", sw=2.5))
-    if expression == "angry":
+    if expression == "manic":
+        for x in (-21, 21):
+            # Bloodshot from hours of screen time.
+            out.append(_path(f"M {x - 19},{EYE_Y + 2} L {x - 11},{EYE_Y + 4} L {x - 7},{EYE_Y + 1}", stroke="#d23c3c", sw=1.5))
+            out.append(_path(f"M {x + 19},{EYE_Y - 3} L {x + 12},{EYE_Y} L {x + 9},{EYE_Y - 4}", stroke="#d23c3c", sw=1.5))
+    if expression == "bored":
+        for x in (-21, 21):
+            # Heavy lids halfway down: flat, unimpressed.
+            out.append(f'<rect x="{x - 25}" y="{EYE_Y - 32}" width="50" height="{32 + 2}" fill="{spec["skin"]}"/>')
+            out.append(_path(f"M {x - 21},{EYE_Y + 2} L {x + 21},{EYE_Y + 2}", sw=3.5))
+    if expression in ("angry", "yelling"):
         for x in (-21, 21):
             # Lid cut across the top of each eye, lower on the inner side.
             top = EYE_Y - 28
@@ -284,8 +355,18 @@ def _eyes(spec, expression, look, blink):
 
 
 def _mouth(expression, mouth, smile=None):
+    if expression == "yelling" and mouth not in (None, "closed"):
+        # Yelling: every open mouth shape comes out bigger.
+        inner = _mouth("angry", "wide" if mouth == "small" else mouth, smile)
+        return f'<g transform="translate(0,{MOUTH_Y}) scale(1.45) translate(0,{-MOUTH_Y})">{inner}</g>'
     y = MOUTH_Y
     if mouth in (None, "closed"):
+        if expression == "manic":
+            smile, expression = "teeth", "happy"
+        if expression == "bored":
+            return _path(f"M -14,{y + 2} L 12,{y}", sw=3.5)
+        if expression == "yelling":
+            expression = "angry"
         if expression == "silly":
             return _ell(8, y, 9, 8, "#c4707f") + _path(f"M 2,{y} L 14,{y}", stroke="#7a3040", sw=2)
         if expression == "happy" and smile == "teeth":
@@ -365,7 +446,7 @@ def _glasses(spec):
     return "".join(out)
 
 
-def _head(spec, expression, mouth, look, blink):
+def _head(spec, expression, mouth, look, blink, glow=None):
     out = []
     if spec.get("ears"):
         out.append(_ell(-80, -226, 11, 17, spec["skin"]))
@@ -384,23 +465,38 @@ def _head(spec, expression, mouth, look, blink):
     else:
         out.append(_mouth(expression, mouth, spec.get("smile")))
         out.append(_facial_hair(spec))
+    if expression == "yelling":
+        out.append(f'<ellipse cx="0" cy="{HEAD_CY + 30}" rx="66" ry="44" fill="#e0362c" fill-opacity="0.28"/>')
+        # Cartoon anger vein on the forehead.
+        out.append(_path("M 30,-292 L 40,-282 M 50,-292 L 40,-282 M 30,-272 L 40,-282 M 50,-272 L 40,-282",
+                         stroke="#d0242a", sw=4))
+    if glow:
+        out.append(f'<ellipse cx="0" cy="{HEAD_CY + 20}" rx="70" ry="56" fill="{glow}" fill-opacity="0.16"/>')
     out.append(_glasses(spec))
     out.append(_hair_front(spec))
     return "".join(out)
 
 
 def draw(spec, x, y, expression="neutral", mouth="closed", arms="down",
-         look=(0, 2), blink=False, head_tilt=0.0, jitter=(0, 0, 0), t=0.0, scale=1.0):
-    """SVG group for one character standing with feet at (x, y)."""
+         look=(0, 2), blink=False, head_tilt=0.0, jitter=(0, 0, 0), t=0.0, scale=1.0,
+         legs="stand", sit_drop=0.0, prop=None, body_rot=0.0, squash=(1.0, 1.0), glow=None):
+    """SVG group for one character with feet (or, sitting, the seat) at (x, y).
+
+    body_rot spins the whole cutout around its middle (flips, cartwheels) and
+    squash scales it from the feet (squash and stretch on take-offs and landings)."""
     jx, jy, jr = jitter
-    head = _head(spec, expression, mouth, look, blink)
+    head = _head(spec, expression, mouth, look, blink, glow)
     # Kids get a shrunken body under a full-size head, like South Park kids.
     body_scale = 0.8 if spec.get("build") == "kid" else 1.0
     neck_drop = -NECK[1] * (1 - body_scale)
     scale *= spec.get("size", 1.0)
-    body = (_legs(spec) + _torso(spec) + _arm(spec, -1, arms, t) + _arm(spec, 1, arms, t))
+    behind, front = (_prop(prop, t), "") if prop == "ipad" else ("", _prop(prop, t))
+    body = (_legs(spec, legs, sit_drop / scale / body_scale) + _torso(spec) + behind
+            + _arm(spec, -1, arms, t) + _arm(spec, 1, arms, t) + front)
+    sx, sy = squash
     return (
-        f'<g transform="translate({x + jx:.1f},{y + jy:.1f}) rotate({jr:.2f}) scale({scale})">'
+        f'<g transform="translate({x + jx:.1f},{y + jy:.1f}) rotate({jr:.2f}) '
+        f'rotate({body_rot:.1f} 0 {-170 * scale:.1f}) scale({scale * sx:.3f},{scale * sy:.3f})">'
         f'<g transform="translate(0,{neck_drop:.1f})">{_hair_back(spec)}</g>'
         f'<g transform="scale({body_scale})">{body}</g>'
         f'<g transform="translate(0,{neck_drop:.1f}) rotate({head_tilt:.2f} {NECK[0]} {NECK[1]})">{head}</g>'

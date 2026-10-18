@@ -18,10 +18,15 @@ from dataclasses import dataclass, field
 
 import yaml
 
-EXPRESSIONS = {"neutral", "happy", "surprised", "angry", "sad", "silly"}
-ARMS = {"down", "wave", "up", "point", "shrug"}
+EXPRESSIONS = {"neutral", "happy", "surprised", "angry", "sad", "silly", "manic", "bored", "yelling"}
+ARMS = {"down", "wave", "up", "point", "shrug", "star"}
 POSITIONS = {"far left": 150, "left": 380, "center": 640, "middle": 640,
-             "right": 900, "far right": 1130}
+             "right": 900, "far right": 1130,
+             "sofa left": 520, "sofa right": 770}   # seats on the `sofa` background
+# `NAME is <activity>`: something a character keeps doing until told otherwise.
+ACTIVITIES = {"playing ipad": "ipad", "playing the ipad": "ipad", "on the ipad": "ipad",
+              "doing gymnastics": "gymnastics", "ignoring everything": "bored",
+              "drinking coffee": "bored", "nothing": ""}
 
 
 @dataclass
@@ -35,6 +40,8 @@ class Line:
     side: str = ""            # entrance/exit side: left | right
     x: float = 0.0
     seconds: float = 0.0
+    sit: bool = False
+    activity: str = ""
 
 
 @dataclass
@@ -45,6 +52,8 @@ class Scene:
 
 def _pos(word):
     word = word.strip().lower()
+    if re.fullmatch(r"\d+(\.\d+)?", word):
+        return float(word)      # an exact x position in pixels, 0 to 1280
     if word not in POSITIONS:
         raise ValueError(f"unknown position {word!r}, use one of {sorted(POSITIONS)}")
     return POSITIONS[word]
@@ -62,6 +71,12 @@ def _direction(text, n):
         return Line("move", who=m.group(1).lower(), x=_pos(m.group(2)))
     if m := re.fullmatch(r"(\w+)\s+exits(?:\s+(left|right))?", t, re.I):
         return Line("exit", who=m.group(1).lower(), side=(m.group(2) or "right").lower())
+    if m := re.fullmatch(r"(\w+)\s+is\s+(.+?)(?:\s+at\s+(.+))?", t, re.I):
+        if m.group(2).lower() in ACTIVITIES:
+            return Line("activity", who=m.group(1).lower(), activity=ACTIVITIES[m.group(2).lower()],
+                        x=_pos(m.group(3)) if m.group(3) else 0.0)
+    if m := re.fullmatch(r"(\w+)\s+sits\s+(?:at\s+|on\s+)?(?:the\s+)?(.+)", t, re.I):
+        return Line("place", who=m.group(1).lower(), x=_pos(m.group(2)), sit=True)
     if m := re.fullmatch(r"(\w+)\s+(?:stands|is)\s+(?:at\s+)?(.+)", t, re.I):
         return Line("place", who=m.group(1).lower(), x=_pos(m.group(2)))
     raise ValueError(f"line {n}: don't understand stage direction {text!r}")

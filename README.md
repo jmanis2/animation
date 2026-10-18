@@ -44,11 +44,18 @@ JEFF: Recorded line. [audio: voices/jeff/line1.m4a]
   - `NAME walks to <pos>`
   - `NAME exits left|right`
   - `NAME stands <pos>`
+  - `NAME sits at <pos>` (use the `sofa` background, seats `sofa left` and `sofa right`)
+  - `NAME is <activity> [at <pos>]`: keeps going under everything else that
+    happens. Activities: `playing ipad`, `doing gymnastics` (a looping
+    cartwheel, backflip and handstand routine), `ignoring everything`
+    (bored, holding a mug), `nothing`.
   - `pause <seconds>`
 
-  Positions are `far left`, `left`, `center`, `right`, and `far right`.
+  Positions are `far left`, `left`, `center`, `right`, `far right`, or an x
+  value in pixels (0 to 1280).
 - Dialogue: `NAME (modifiers): text`. The modifiers are optional:
-  - expressions: `neutral`, `happy`, `surprised`, `angry`, `sad`, `silly`
+  - expressions: `neutral`, `happy`, `surprised`, `angry`, `sad`, `silly`,
+    `manic`, `bored`, `yelling` (shakes, flushes, and gets a louder delivery)
   - arms: `down`, `wave`, `up`, `point`, `shrug`
 - Voices: see below. Add `[audio: path]` to a line to use a real recording
   in any format ffmpeg reads. The mouth moves with the loudness of the audio
@@ -83,6 +90,8 @@ python3 -m toon.render episodes/pilot.md
 - It runs on CPU at a few seconds per line, and uses a CUDA GPU if one is
   present.
 - `exaggeration` in the character YAML sets how animated the delivery is.
+- `TOON_PREVIEW=1 python3 -m toon.render ...` renders a fast draft with the
+  robot voices, which is handy for checking staging before cloning.
 - `pitch_shift` (semitones) moves a cloned voice up or down while keeping
   its timbre. Use it to separate similar voices, for example siblings.
 - To choose a reference clip, take the 10 to 15 seconds of the memo that

@@ -23,28 +23,118 @@ LINE_GAP = 0.35   # seconds of silence after each line
 ROOT = Path(__file__).resolve().parent.parent
 
 
+# Elisa's looping Looney Tunes floor routine: (seconds, move).
+ROUTINE = [(1.0, "cartwheel_left"), (0.25, "land"), (0.15, "crouch"), (1.0, "backflip"),
+           (0.3, "land"), (1.3, "handstand"), (0.35, "flip_down"), (1.5, "split_jumps"),
+           (1.0, "cartwheel_right"), (0.25, "land"), (0.5, "ta_da")]
+ROUTINE_LEN = sum(d for d, _ in ROUTINE)
+ROUTINE_SPAN = 110   # px either side of the home spot
+
+
+def gymnastics(tt, x0):
+    """Pose for the floor routine at tt seconds in: x, height, spin, squash and effects."""
+    tt %= ROUTINE_LEN
+    for i, (dur, move) in enumerate(ROUTINE):
+        if tt < dur:
+            u = tt / dur
+            break
+        tt -= dur
+    A = ROUTINE_SPAN
+    # Where each move happens: tumble left, flips on the left, bounce back to
+    # the middle, cartwheel to the right, finish on the right.
+    left_half = 1 <= i <= 6
+    p = dict(x=x0 - A if left_half else x0 + A, lift=0.0, rot=0.0, squash=(1.0, 1.0),
+             arms="up", legs="stand", mouth=None, fx=[])
+    if move == "cartwheel_left":
+        p.update(x=x0 + A - 2 * A * u, rot=-360 * u, arms="star", legs="spread",
+                 lift=abs(math.sin(math.pi * u * 2)) * 18)
+        p["fx"].append(("speed", 70, 1))
+    elif move == "cartwheel_right":
+        p.update(x=x0 + A * u, rot=360 * u, arms="star", legs="spread",
+                 lift=abs(math.sin(math.pi * u * 2)) * 18)
+        p["fx"].append(("speed", -70, -1))
+    elif move == "land":
+        p.update(squash=(1 + 0.22 * (1 - u), 1 - 0.25 * (1 - u)), arms="star")
+        p["fx"].append(("dust", u))
+    elif move == "crouch":
+        p.update(squash=(1 + 0.12 * u, 1 - 0.15 * u))
+    elif move == "backflip":
+        p.update(lift=280 * 4 * u * (1 - u), rot=-360 * u, mouth="o" if 0.3 < u < 0.7 else None,
+                 squash=(0.88, 1.18) if u < 0.15 else (1.0, 1.0))
+    elif move == "handstand":
+        p.update(rot=180 + 8 * math.sin(tt * 9), lift=-55, mouth="small")
+    elif move == "flip_down":
+        p.update(rot=180 + 180 * u, lift=-55 * (1 - u) + 70 * math.sin(math.pi * u))
+    elif move == "split_jumps":
+        v = (u * 3) % 1
+        apex = 0.25 < v < 0.75
+        p.update(x=x0 - A + A * u, lift=180 * 4 * v * (1 - v), arms="star" if apex else "up",
+                 legs="spread" if apex else "stand",
+                 squash=(1.15, 0.85) if v < 0.08 or v > 0.92 else (1.0, 1.0))
+    elif move == "ta_da":
+        p.update(mouth="small")
+    return p
+
+
 class Actor:
     def __init__(self, cid, spec):
         self.id, self.spec = cid, spec
         self.x, self.on = -200.0, False
         self.expression, self.arms = "neutral", "down"
-        self.walking = False
+        self.walking = self.sitting = False
+        self.activity, self.act_start, self.home_x = "", 0, 0.0
         self.rng = random.Random(cid)
         self.blink_left = 0
 
-    def snapshot(self, frame, mouth="closed", look=(0, 2), head_tilt=0.0):
+    @property
+    def ignores_others(self):
+        return self.activity in ("ipad", "bored")
+
+    def snapshot(self, frame, mouth="closed", look=(0, 2), head_tilt=0.0, speaking=False):
         if self.blink_left:
             self.blink_left -= 1
-        elif self.rng.random() < 1 / 40:
-            self.blink_left = 2
+        elif self.rng.random() < (1 / 70 if self.activity == "bored" else 1 / 40):
+            self.blink_left = 3 if self.activity == "bored" else 2
+        expression = self.expression
         # Re-seat the cutout every other frame, like a hand nudging paper.
-        j = random.Random(f"{self.id}:{frame // 2}")
-        jitter = (j.uniform(-1.2, 1.2), j.uniform(-1, 1), j.uniform(-0.6, 0.6))
+        # Yelling and frantic gaming shake every frame instead.
+        amp, step = 1.0, 2
+        if expression == "yelling" and speaking:
+            amp, step = 4.5, 1
+        elif self.activity == "ipad":
+            amp, step = 1.8, 1
+        j = random.Random(f"{self.id}:{frame // step}")
+        jitter = (j.uniform(-1.2, 1.2) * amp, j.uniform(-1, 1) * amp, j.uniform(-0.6, 0.6) * amp)
         hop = -abs(math.sin(frame * math.pi / 3)) * 10 if self.walking else 0
-        return dict(id=self.id, x=self.x, y=scenes.GROUND_Y + hop,
-                    expression=self.expression, arms=self.arms, mouth=mouth,
-                    look=look, blink=self.blink_left > 0, head_tilt=head_tilt,
-                    jitter=jitter, t=frame / FPS, scale=1.2)
+        st = dict(id=self.id, x=self.x, y=scenes.GROUND_Y + hop, expression=expression,
+                  arms=self.arms, mouth=mouth, look=look, blink=self.blink_left > 0,
+                  head_tilt=head_tilt, jitter=jitter, t=frame / FPS, scale=1.2, z=0, fx=[])
+        if self.sitting:
+            st.update(y=scenes.SEAT_Y, legs="sit", sit_drop=scenes.GROUND_Y - scenes.SEAT_Y)
+        tt = (frame - self.act_start) / FPS
+        if self.activity == "ipad":
+            st.update(arms="ipad", prop="ipad",
+                      glow=("#5ec8ff", "#ff5ec4", "#ffe75e", "#6bff8a")[int(tt * 6) % 4],
+                      head_tilt=head_tilt + (2 if frame % 2 else -2))
+            if self.expression in ("neutral", ""):
+                st["expression"] = "manic"
+            st["y"] -= abs(math.sin(frame * 1.7)) * 4
+        elif self.activity == "bored":
+            st.update(arms="mug", prop="mug")
+            if self.expression in ("neutral", ""):
+                st["expression"] = "bored"
+        elif self.activity == "gymnastics":
+            g = gymnastics(tt, self.home_x)
+            self.x = g["x"]
+            st.update(x=g["x"], y=scenes.GROUND_Y - g["lift"], body_rot=g["rot"], squash=g["squash"],
+                      arms=g["arms"], legs=g["legs"], z=1, blink=False,
+                      fx=[(f[0], g["x"] + f[1], f[2]) if f[0] == "speed" else (f[0], f[1], g["x"])
+                          for f in g["fx"]])
+            if self.expression in ("neutral", ""):
+                st["expression"] = "happy"
+            if not speaking and g["mouth"]:
+                st["mouth"] = g["mouth"]
+        return st
 
 
 class Timeline:
@@ -63,10 +153,11 @@ class Timeline:
                 if not a.on:
                     continue
                 look = looks.get(a.id)
-                if look is None and speaker and speaker != a.id and self.cast[speaker].on:
+                if (look is None and speaker and speaker != a.id and self.cast[speaker].on
+                        and not a.ignores_others):
                     look = (5 if self.cast[speaker].x > a.x else -5, 1)
-                states.append(a.snapshot(idx, mouths.get(a.id, "closed"),
-                                         look or (0, 2), tilts.get(a.id, 0.0)))
+                states.append(a.snapshot(idx, mouths.get(a.id, "closed"), look or (0, 2),
+                                         tilts.get(a.id, 0.0), speaking=a.id == speaker))
             self.frames.append(dict(bg=self.bg, actors=states, subtitle=self.subtitle))
 
     def walk(self, actor, target):
@@ -102,7 +193,13 @@ def build(meta, episode_scenes, cast, workdir):
             if ln.kind == "pause":
                 tl.emit(round(ln.seconds * FPS))
             elif ln.kind == "place":
-                a.x, a.on = ln.x, True
+                a.x, a.on, a.sitting = ln.x, True, ln.sit
+            elif ln.kind == "activity":
+                a.on = True
+                a.activity, a.act_start = ln.activity, len(tl.frames)
+                if ln.x:
+                    a.x = ln.x
+                a.home_x = a.x
             elif ln.kind == "enter":
                 a.x, a.on = (-120 if ln.side == "left" else scenes.W + 120), True
                 tl.walk(a, ln.x)
@@ -115,10 +212,16 @@ def build(meta, episode_scenes, cast, workdir):
                 if not a.on:
                     a.x, a.on = 640, True
                 clip = workdir / f"line{len(tl.clips):03d}.wav"
+                voice = dict(a.spec["voice"])
+                # Big emotions get a more intense delivery from the voice model.
+                if ln.expression == "yelling":
+                    voice.update(exaggeration=max(float(voice.get("exaggeration", 0.5)), 0.9), cfg_weight=0.3)
+                elif ln.expression == "manic":
+                    voice.update(exaggeration=max(float(voice.get("exaggeration", 0.5)), 0.8), cfg_weight=0.4)
                 if ln.audio:
                     samples = audio.load_recording(ROOT / ln.audio, clip)
                 else:
-                    samples = audio.synth(ln.text, a.spec["voice"], clip)
+                    samples = audio.synth(ln.text, voice, clip)
                 shapes = audio.mouth_shapes(samples, FPS)
                 start = len(tl.frames)
                 tl.clips.append((start * audio.RATE // FPS, samples))
@@ -134,6 +237,8 @@ def build(meta, episode_scenes, cast, workdir):
                 tl.emit(len(shapes) + round(LINE_GAP * FPS), talk)
                 tl.subtitle = ""
                 a.expression, a.arms = saved
+                if ln.expression == "yelling":
+                    a.expression = "angry"     # still fuming between lines
     return tl
 
 
@@ -142,9 +247,11 @@ def frame_svg(frame, cast, idx, title, show_subtitles):
         body = scenes.title_card(idx, html.escape(title))
     else:
         body = scenes.BACKGROUNDS[frame["bg"]](idx)
-    for st in sorted(frame["actors"], key=lambda s: s["x"]):
+    for st in sorted(frame["actors"], key=lambda s: (s["z"], s["x"])):
         st = dict(st)
         spec = cast[st.pop("id")].spec
+        st.pop("z")
+        body += "".join(_fx(f) for f in st.pop("fx"))
         body += puppet.draw(spec, **st)
     if show_subtitles and frame["subtitle"]:
         text = html.escape(frame["subtitle"])
@@ -153,6 +260,21 @@ def frame_svg(frame, cast, idx, title, show_subtitles):
                  f'text-anchor="middle">{text}</text>')
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{scenes.W}" height="{scenes.H}" '
             f'viewBox="0 0 {scenes.W} {scenes.H}">{body}</svg>')
+
+
+def _fx(f):
+    """Cartoon effects: speed lines behind fast moves, dust puffs on landings."""
+    if f[0] == "speed":
+        _, x, d = f
+        y = scenes.GROUND_Y - 200
+        return "".join(f'<path d="M {x:.0f},{y + k * 34} l {d * (90 - k * 12):.0f},0" stroke="#141414" '
+                       f'stroke-width="4" stroke-linecap="round" opacity="0.55"/>' for k in range(4))
+    if f[0] == "dust":
+        _, u, x = f
+        r, o = 14 + 30 * u, 0.7 * (1 - u)
+        return "".join(f'<circle cx="{x + dx * (1 + 2 * u):.0f}" cy="{scenes.GROUND_Y - 8}" r="{r:.0f}" '
+                       f'fill="#d9c7a8" opacity="{o:.2f}" stroke="#141414" stroke-width="2"/>' for dx in (-55, 0, 55))
+    return ""
 
 
 _job = {}

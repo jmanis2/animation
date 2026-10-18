@@ -1,6 +1,8 @@
 ---
 title: Screen Time
 subtitles: true
+costumes:
+  elisa: gymnastics
 ---
 
 ## Scene 1: sofa

@@ -300,7 +300,8 @@ def main():
     ep = Path(args.episode)
     meta, episode_scenes = parse(ep)
     names = {ln.who for s in episode_scenes for ln in s.lines if ln.who}
-    cast = {n: Actor(n, puppet.load_character(ROOT / "characters" / f"{n}.yaml"))
+    costumes = meta.get("costumes", {})
+    cast = {n: Actor(n, puppet.load_character(ROOT / "characters" / f"{n}.yaml", costumes.get(n)))
             for n in sorted(names)}
 
     work = ROOT / "out" / ep.stem

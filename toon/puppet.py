@@ -3,6 +3,8 @@
 Coordinates are local to the character: origin at the feet, y going up is
 negative. A standing character is about 330px tall.
 """
+import math
+
 import yaml
 
 OUTLINE = "#141414"
@@ -16,9 +18,21 @@ MOUTH_Y = -176
 NECK = (0, -150)
 
 
-def load_character(path):
+def _merge(base, over):
+    out = dict(base)
+    for k, v in over.items():
+        out[k] = _merge(base[k], v) if isinstance(v, dict) and isinstance(base.get(k), dict) else v
+    return out
+
+
+def load_character(path, costume=None):
+    """Load a character; `costume` applies one of its `costumes:` overrides."""
     with open(path) as f:
         spec = yaml.safe_load(f)
+    if costume:
+        if costume not in spec.get("costumes", {}):
+            raise SystemExit(f"{path} has no costume {costume!r}")
+        spec = _merge(spec, spec["costumes"][costume])
     spec.setdefault("eyes", {})
     spec.setdefault("hair", {"style": "bald"})
     spec.setdefault("facial_hair", {"style": "none"})
@@ -74,7 +88,8 @@ def _arm(spec, side, arms, t):
     top = spec["outfit"]["top"]
     (sx, sy), (ex, ey), (hx, hy) = _arm_points(side, arms, t)
     d = f"M {sx},{sy} L {ex},{ey} L {hx},{hy}"
-    out = [_path(d, stroke=OUTLINE, sw=27), _path(d, stroke=top["color"], sw=21)]
+    sleeve = spec["skin"] if top.get("style") == "leotard" else top["color"]
+    out = [_path(d, stroke=OUTLINE, sw=27), _path(d, stroke=sleeve, sw=21)]
     if top.get("trim"):
         # Short trim band at the cuff.
         fx, fy = hx + (ex - hx) * 0.28, hy + (ey - hy) * 0.28
@@ -86,6 +101,10 @@ def _arm(spec, side, arms, t):
 
 def _legs(spec, legs="stand", sit_drop=0.0):
     o = spec["outfit"]
+    if o["top"].get("style") == "leotard":
+        bare = dict(o, pants=spec["skin"], shoes=spec["skin"])
+        cut = _path("M -46,-48 L 46,-48 L 40,-36 L 0,-26 L -40,-36 Z", fill=o["top"]["color"])
+        return _legs(dict(spec, outfit=dict(bare, top={})), legs, sit_drop) + cut
     if legs == "spread":
         return "".join([
             _path("M -44,-46 L 44,-46 L 74,-14 L 50,-6 L 0,-32 L -50,-6 L -74,-14 Z", fill=o["pants"]),
@@ -121,6 +140,14 @@ def _torso(spec):
         out.append(_path("M -26,-152 L 0,-120 L 26,-152 Z", fill=top["collar"]))
         out.append(_path("M -26,-150 L -12,-132 L -4,-146", fill=top["collar"], sw=2.5))
         out.append(_path("M 26,-150 L 12,-132 L 4,-146", fill=top["collar"], sw=2.5))
+    if top.get("style") == "leotard":
+        # Scoop neck, and a sparkly diagonal stripe so it reads as competition wear.
+        out.append(_path("M -28,-152 Q 0,-128 28,-152 Z", fill="#f5d3bd" if not top.get("skin") else top["skin"], sw=2))
+        stripe = top.get("stripe", "#ffffff")
+        out.append(_path("M -50,-80 L 46,-150 L 50,-128 L -54,-56 Z", fill=stripe, stroke="none"))
+        for sx_, sy_ in ((-20, -92), (8, -112), (30, -128), (-36, -74)):
+            out.append(f'<path d="M {sx_},{sy_ - 6} L {sx_ + 2},{sy_ - 2} L {sx_ + 6},{sy_} L {sx_ + 2},{sy_ + 2} '
+                       f'L {sx_},{sy_ + 6} L {sx_ - 2},{sy_ + 2} L {sx_ - 6},{sy_} L {sx_ - 2},{sy_ - 2} Z" fill="#ffe36b"/>')
     if top.get("style") in ("sweatshirt", "tee"):
         # Ribbed crew neck, cuff band at the hem.
         out.append(_path("M -30,-152 Q 0,-126 30,-152", fill=top.get("rib", top["color"]), sw=2.5))
@@ -196,8 +223,13 @@ def _prop(prop, t):
     return ""
 
 
-def _hair_back(spec):
+def _hair_back(spec, t=0.0):
     h = spec["hair"]
+    if h["style"] == "ponytail":
+        sway = 10 * math.sin(t * 9)
+        return _path(f"M 50,-318 C 100,-330 {120 + sway:.0f},-290 {112 + sway:.0f},-240 "
+                     f"C {106 + sway:.0f},-205 {92 + sway:.0f},-190 {84 + sway:.0f},-178 "
+                     f"C {90 + sway:.0f},-215 82,-260 54,-292 Z", fill=h["color"])
     if h["style"] == "long_wavy":
         return _path("M -86,-240 C -106,-196 -86,-166 -102,-128 C -96,-104 -84,-108 -76,-94 "
                      "C -60,-100 -50,-96 -40,-104 L 40,-104 C 50,-96 60,-100 76,-94 "
@@ -239,6 +271,15 @@ def _hair_front(spec):
                   "C 80,-160 72,-190 74,-232 Z", fill=c, sw=2.5),
             _path("M -6,-298 C -2,-308 2,-314 6,-320", stroke=hi, sw=2),
             _path("M -56,-290 C -70,-270 -80,-240 -88,-200", stroke=hi, sw=2.5),
+        ])
+    if style == "ponytail":
+        # Hair pulled back tight with a tie; the tail itself is drawn behind the head.
+        tie = h.get("tie", "#e0457b")
+        return "".join([
+            _path("M -82,-226 C -88,-296 -50,-322 -4,-320 C 50,-322 88,-296 82,-226 "
+                  "C 74,-262 44,-288 0,-290 C -44,-288 -74,-262 -82,-226 Z", fill=c),
+            _path("M -40,-300 C -20,-312 20,-312 40,-300", stroke=h.get("highlight", "#e2b57a"), sw=2),
+            _ell(56, -306, 9, 11, tie, sw=2.5),
         ])
     if style == "long_straight":
         # Side part on one side, the rest sweeping across the forehead.
@@ -497,7 +538,7 @@ def draw(spec, x, y, expression="neutral", mouth="closed", arms="down",
     return (
         f'<g transform="translate({x + jx:.1f},{y + jy:.1f}) rotate({jr:.2f}) '
         f'rotate({body_rot:.1f} 0 {-170 * scale:.1f}) scale({scale * sx:.3f},{scale * sy:.3f})">'
-        f'<g transform="translate(0,{neck_drop:.1f})">{_hair_back(spec)}</g>'
+        f'<g transform="translate(0,{neck_drop:.1f})">{_hair_back(spec, t)}</g>'
         f'<g transform="scale({body_scale})">{body}</g>'
         f'<g transform="translate(0,{neck_drop:.1f}) rotate({head_tilt:.2f} {NECK[0]} {NECK[1]})">{head}</g>'
         + "</g>"

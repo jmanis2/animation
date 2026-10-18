@@ -31,3 +31,14 @@ voice:
   espeak: en-us+f4
   pitch: 90
   speed: 185
+costumes:
+  gymnastics:          # leotard, bare feet, hair tied back (`costumes:` in an episode)
+    hair:
+      style: ponytail
+      tie: "#e0457b"
+    outfit:
+      top:
+        style: leotard
+        color: "#c2338f"
+        stripe: "#f2a5d6"
+        skin: "#f5d3bd"

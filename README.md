@@ -115,4 +115,9 @@ copy one of their YAML files and change the fields:
 - Extras: `freckles`, `ears`, `eyes.lashes`, `smile: teeth`, and
   `facial_hair: chevron_mustache`
 
+- Costumes: a character file can define `costumes:`, overrides switched on
+  per episode with `costumes: {elisa: gymnastics}` in the episode's front
+  matter. Elisa's `gymnastics` costume is a leotard with her hair in a
+  `ponytail`.
+
 New hair or clothing styles go in `toon/puppet.py`.
